@@ -8,7 +8,9 @@ class Game {
     this.gameState = new GameState(this.renderer.width, this.renderer.height);
     this.lastTime = performance.now();
     this.uiOverlay = document.getElementById('ui-overlay');
+    this.restartBtn = document.getElementById('restart-btn');
     
+    this.restartBtn.addEventListener('click', () => this.restart());
     window.addEventListener('resize', () => this.handleResize());
     
     // Start audio on first interaction
@@ -60,8 +62,22 @@ class Game {
     this.uiOverlay.innerHTML = `
       BEINGS: ${beingCount}<br>
       ENERGY: ${energyPct}%<br>
-      ${stats.playerAlive ? 'SPACE/TAP: SPAWN' : 'GAME OVER'}
+      ${stats.playerAlive ? 'SPACE/TAP: SPAWN' : 'PATTERNS COLLAPSED'}
     `;
+
+    if (!stats.playerAlive) {
+      this.restartBtn.style.display = 'block';
+    } else {
+      this.restartBtn.style.display = 'none';
+    }
+  }
+
+  restart() {
+    this.gameState = new GameState(this.renderer.width, this.renderer.height);
+    this.restartBtn.style.display = 'none';
+    if (this.audioCtx && this.audioCtx.state === 'suspended') {
+      this.audioCtx.resume();
+    }
   }
   
   gameLoop(currentTime) {

@@ -9,7 +9,7 @@ export class WaveEntity {
     this.phase = Math.random() * Math.PI * 2;
     this.age = 0;
     this.alive = true;
-    this.energy = 1.0;
+    this.energy = 1.2; // Start with a bit more buffer
   }
   
   update(dt, field) {

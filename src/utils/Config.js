@@ -9,8 +9,8 @@ export const Config = {
   PLAYER_AMPLITUDE: 0.8,
   ENTITY_PULSE_FREQ: 2.0,
   RESONANCE_THRESHOLD: 1.2,
-  ENERGY_DRAIN_BASE: 0.08,
-  HARMONIC_RANGE: 0.4, // Tolerance for "friendly" frequencies
+  ENERGY_DRAIN_BASE: 0.05, // Slightly lower base drain
+  HARMONIC_RANGE: 0.4, 
   
   // Visual
   PRESSURE_SCALE: 2.5,

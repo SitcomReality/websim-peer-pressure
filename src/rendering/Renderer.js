@@ -4,6 +4,14 @@ export class Renderer {
   constructor(canvas) {
     this.canvas = canvas;
     this.ctx = canvas.getContext('2d', { alpha: false }); // Performance optimization
+    
+    // Low-res canvas for the pressure field simulation
+    this.offscreenCanvas = document.createElement('canvas');
+    this.offscreenCanvas.width = Config.GRID_SIZE;
+    this.offscreenCanvas.height = Config.GRID_SIZE;
+    this.offscreenCtx = this.offscreenCanvas.getContext('2d');
+    this.offscreenData = this.offscreenCtx.createImageData(Config.GRID_SIZE, Config.GRID_SIZE);
+
     this.particles = [];
     this.initParticles();
     this.resize();
@@ -35,22 +43,15 @@ export class Renderer {
   }
   
   renderPressureField(field) {
-    // We use a lower resolution imageData for performance if needed, 
-    // but for now let's stick to full size or slightly smaller
-    const imageData = this.ctx.createImageData(this.width, this.height);
-    const data = imageData.data;
-    
-    const h = this.height;
-    const w = this.width;
+    const data = this.offscreenData.data;
+    const size = Config.GRID_SIZE;
     const neutral = Config.COLOR_NEUTRAL;
     const hot = Config.COLOR_HOT;
     const cold = Config.COLOR_COLD;
     const scale = Config.PRESSURE_SCALE;
 
-    for (let i = 0; i < h * w; i++) {
-      const x = i % w;
-      const y = Math.floor(i / w);
-      const pressure = field.getPressure(x, y) * scale;
+    for (let i = 0; i < size * size; i++) {
+      const pressure = field.pressure[i] * scale;
       const idx = i * 4;
       
       let r, g, b;
@@ -72,7 +73,8 @@ export class Renderer {
       data[idx + 3] = 255;
     }
     
-    this.ctx.putImageData(imageData, 0, 0);
+    this.offscreenCtx.putImageData(this.offscreenData, 0, 0);
+    this.ctx.drawImage(this.offscreenCanvas, 0, 0, this.width, this.height);
   }
 
   renderParticles(field, dt) {
