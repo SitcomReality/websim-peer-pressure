@@ -6,6 +6,7 @@ export class InputHandler {
     this.movement = new Vector2D(0, 0);
     this.isMobile = 'ontouchstart' in window;
     this.actionPressed = false;
+    this.dashPressed = false;
     
     if (this.isMobile) {
       this.setupMobileControls();
@@ -54,12 +55,18 @@ export class InputHandler {
       if (e.key === ' ' && !this.actionPressed) {
         this.actionPressed = true;
       }
+      if (e.key.toLowerCase() === 'e' && !this.dashPressed) {
+        this.dashPressed = true;
+      }
     });
     
     window.addEventListener('keyup', (e) => {
       this.keys[e.key.toLowerCase()] = false;
       if (e.key === ' ') {
         this.actionPressed = false;
+      }
+      if (e.key.toLowerCase() === 'e') {
+        this.dashPressed = false;
       }
     });
   }
@@ -81,6 +88,12 @@ export class InputHandler {
   consumeAction() {
     const pressed = this.actionPressed;
     this.actionPressed = false;
+    return pressed;
+  }
+  
+  consumeDash() {
+    const pressed = this.dashPressed;
+    this.dashPressed = false;
     return pressed;
   }
 }

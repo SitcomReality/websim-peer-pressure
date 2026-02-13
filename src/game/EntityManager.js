@@ -23,10 +23,20 @@ export class EntityManager {
     this.nodes.push(node);
   }
   
-  spawnEntity(x, y) {
+  spawnEntity(x, y, type = null) {
     const frequency = 0.5 + Math.random() * 1.0;  // Slower frequencies
     const amplitude = 0.3 + Math.random() * 0.3;
-    this.entities.push(new WaveEntity(x, y, frequency, amplitude));
+    
+    // Random type if not specified
+    if (type === null) {
+      const rand = Math.random();
+      if (rand < 0.4) type = Config.ENTITY_TYPES.PULSER;
+      else if (rand < 0.6) type = Config.ENTITY_TYPES.EMITTER;
+      else if (rand < 0.8) type = Config.ENTITY_TYPES.ATTRACTOR;
+      else type = Config.ENTITY_TYPES.REPULSOR;
+    }
+    
+    this.entities.push(new WaveEntity(x, y, frequency, amplitude, type));
   }
   
   update(dt, field) {
@@ -148,7 +158,7 @@ export class EntityManager {
     return absorbed;
   }
   
-  spawnOffspring(x, y, parentEnergy) {
+  spawnOffspring(x, y, parentEnergy, type = Config.ENTITY_TYPES.PULSER) {
     if (parentEnergy < 0.25) return null;
     
     const angle = Math.random() * Math.PI * 2;
@@ -158,7 +168,7 @@ export class EntityManager {
     
     const frequency = 0.5 + Math.random() * 1.0;  // Slower offspring
     const amplitude = 0.35 + Math.random() * 0.25;
-    const offspring = new WaveEntity(newX, newY, frequency, amplitude);
+    const offspring = new WaveEntity(newX, newY, frequency, amplitude, type);
     offspring.energy = 0.7;
     this.entities.push(offspring);
     

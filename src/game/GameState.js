@@ -11,6 +11,15 @@ export class GameState {
     this.entityManager = new EntityManager();
     this.input = new InputHandler();
     
+    // Dash state
+    this.isDashing = false;
+    this.dashTimer = 0;
+    this.dashCooldown = 0;
+    this.dashDirection = { x: 0, y: 0 };
+    
+    // Barriers
+    this.barriers = this.createBarriers();
+    
     // Create player in center
     this.entityManager.createPlayer(width / 2, height / 2);
     
@@ -21,23 +30,72 @@ export class GameState {
       this.entityManager.spawnNode(x, y, 1.0 + Math.random() * 2.0);
     }
 
-    // Spawn fewer initial entities for calm start
-    for (let i = 0; i < 2; i++) {
+    // Spawn varied initial entities
+    for (let i = 0; i < 4; i++) {
       const x = Math.random() * width;
       const y = Math.random() * height;
       this.entityManager.spawnEntity(x, y);
     }
   }
   
+  createBarriers() {
+    const barriers = [];
+    const count = 3;
+    for (let i = 0; i < count; i++) {
+      barriers.push({
+        x: this.width * (0.2 + i * 0.3),
+        y: this.height * 0.5,
+        radius: 60,
+        frequency: 1.5 + i * 0.5
+      });
+    }
+    return barriers;
+  }
+  
   update(dt) {
+    // Update dash
+    if (this.isDashing) {
+      this.dashTimer -= dt;
+      if (this.dashTimer <= 0) {
+        this.isDashing = false;
+      }
+    }
+    if (this.dashCooldown > 0) {
+      this.dashCooldown -= dt;
+    }
+    
     // Handle player movement
     const movement = this.input.getMovement();
     if (this.entityManager.player && this.entityManager.player.alive) {
-      const speed = Config.MOVE_SPEED * dt;
-      this.entityManager.player.move(
-        movement.x * speed,
-        movement.y * speed
-      );
+      // Check for dash input
+      if (this.input.consumeDash() && this.dashCooldown <= 0) {
+        if (movement.length() > 0) {
+          this.isDashing = true;
+          this.dashTimer = Config.DASH_DURATION;
+          this.dashCooldown = Config.DASH_COOLDOWN;
+          this.dashDirection = movement.normalize();
+        }
+      }
+      
+      let speed = Config.MOVE_SPEED * dt;
+      let moveX = movement.x * speed;
+      let moveY = movement.y * speed;
+      
+      // Apply dash speed boost
+      if (this.isDashing) {
+        moveX = this.dashDirection.x * Config.DASH_SPEED * dt;
+        moveY = this.dashDirection.y * Config.DASH_SPEED * dt;
+      } else {
+        // Apply pressure forces (only when not dashing)
+        const vel = this.field.getVelocity(
+          this.entityManager.player.position.x,
+          this.entityManager.player.position.y
+        );
+        moveX -= vel.x * Config.PRESSURE_FORCE_MULTIPLIER * dt;
+        moveY -= vel.y * Config.PRESSURE_FORCE_MULTIPLIER * dt;
+      }
+      
+      this.entityManager.player.move(moveX, moveY);
       
       // Keep player in bounds
       this.entityManager.player.position.x = Math.max(20, Math.min(this.width - 20, this.entityManager.player.position.x));
@@ -48,15 +106,32 @@ export class GameState {
       
       // Spawn offspring on action press
       if (this.input.consumeAction()) {
+        // Cycle through entity types when spawning
+        const types = [
+          Config.ENTITY_TYPES.PULSER,
+          Config.ENTITY_TYPES.EMITTER,
+          Config.ENTITY_TYPES.ATTRACTOR,
+          Config.ENTITY_TYPES.REPULSOR
+        ];
+        const type = types[Math.floor(Math.random() * types.length)];
+        
         const spawned = this.entityManager.spawnOffspring(
           this.entityManager.player.position.x,
           this.entityManager.player.position.y,
-          this.entityManager.player.energy
+          this.entityManager.player.energy,
+          type
         );
         if (spawned) {
           this.entityManager.player.energy -= 0.25;
         }
       }
+    }
+    
+    // Update barriers
+    for (const barrier of this.barriers) {
+      const phase = performance.now() * 0.001 * barrier.frequency;
+      const pressure = Math.sin(phase) * 1.2;
+      this.field.addPressure(barrier.x, barrier.y, pressure * dt * 30);
     }
     
     // Update entities
@@ -70,7 +145,9 @@ export class GameState {
     return {
       entities: this.entityManager.entities.length,
       playerAlive: this.entityManager.player?.alive || false,
-      playerEnergy: this.entityManager.player?.energy.toFixed(2) || 0
+      playerEnergy: this.entityManager.player?.energy.toFixed(2) || 0,
+      dashCooldown: Math.max(0, this.dashCooldown),
+      isDashing: this.isDashing
     };
   }
 }

@@ -39,6 +39,11 @@ class Game {
     this.renderer.renderPressureField(this.gameState.field);
     this.renderer.renderParticles(this.gameState.field, dt);
     
+    // Render barriers
+    for (const barrier of this.gameState.barriers) {
+      this.renderer.renderBarrier(barrier);
+    }
+    
     // Render environmental nodes
     for (const node of this.gameState.entityManager.nodes) {
       this.renderer.renderEntity(node, false);
@@ -58,11 +63,13 @@ class Game {
     const stats = this.gameState.getStats();
     const energyPct = (stats.playerEnergy * 100).toFixed(0);
     const beingCount = stats.playerAlive ? stats.entities + 1 : stats.entities;
+    const dashStatus = stats.isDashing ? 'DASHING!' : 
+                       stats.dashCooldown > 0 ? `DASH: ${stats.dashCooldown.toFixed(1)}s` : 'E: DASH';
     
     this.uiOverlay.innerHTML = `
       BEINGS: ${beingCount}<br>
       ENERGY: ${energyPct}%<br>
-      ${stats.playerAlive ? 'SPACE/TAP: SPAWN' : 'PATTERNS COLLAPSED'}
+      ${stats.playerAlive ? dashStatus + '<br>SPACE/TAP: SPAWN' : 'PATTERNS COLLAPSED'}
     `;
 
     if (!stats.playerAlive) {

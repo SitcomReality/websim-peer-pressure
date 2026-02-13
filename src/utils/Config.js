@@ -26,8 +26,22 @@ export const Config = {
   
   // Input
   MOVE_SPEED: 140,     // Slower, more deliberate movement
+  DASH_SPEED: 400,
+  DASH_DURATION: 0.25,
+  DASH_COOLDOWN: 2.0,
+  
+  // Physics
+  PRESSURE_FORCE_MULTIPLIER: 25,  // How much pressure affects player movement
   
   // Nodes
   NODE_COUNT: 5,
-  NODE_ENERGY_BOOST: 0.15
+  NODE_ENERGY_BOOST: 0.15,
+  
+  // Entity Types
+  ENTITY_TYPES: {
+    PULSER: 0,      // Normal pulsing entity
+    EMITTER: 1,     // Constant pressure emitter
+    ATTRACTOR: 2,   // Pulls things in
+    REPULSOR: 3     // Pushes things away
+  }
 };

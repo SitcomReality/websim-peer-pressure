@@ -97,10 +97,34 @@ export class Renderer {
     }
   }
   
+  renderBarrier(barrier) {
+    const phase = performance.now() * 0.001 * barrier.frequency;
+    const pulse = (Math.sin(phase) + 1) / 2;
+    const intensity = pulse * 0.6 + 0.4;
+    
+    // Pulsing barrier ring
+    this.ctx.strokeStyle = `rgba(255, 100, 100, ${0.3 + intensity * 0.4})`;
+    this.ctx.lineWidth = 3;
+    this.ctx.beginPath();
+    this.ctx.arc(barrier.x, barrier.y, barrier.radius, 0, Math.PI * 2);
+    this.ctx.stroke();
+    
+    // Inner warning glow
+    const grad = this.ctx.createRadialGradient(barrier.x, barrier.y, 0, barrier.x, barrier.y, barrier.radius * 0.7);
+    grad.addColorStop(0, `rgba(255, 120, 120, ${intensity * 0.2})`);
+    grad.addColorStop(1, 'rgba(255, 80, 80, 0)');
+    this.ctx.fillStyle = grad;
+    this.ctx.beginPath();
+    this.ctx.arc(barrier.x, barrier.y, barrier.radius * 0.7, 0, Math.PI * 2);
+    this.ctx.fill();
+  }
+
   renderEntity(entity, isPlayer = false) {
     const x = entity.position.x;
     const y = entity.position.y;
-    const pulse = (Math.sin(entity.phase) + 1) / 2; // 0 to 1
+    const pulse = entity.type === Config.ENTITY_TYPES.PULSER ? 
+                  (Math.sin(entity.phase) + 1) / 2 : 
+                  0.7; // Constant for non-pulsers
     const intensity = pulse * Math.min(1.0, entity.energy);
     
     if (entity.isNode) {
@@ -159,12 +183,26 @@ export class Renderer {
       this.ctx.arc(x, y, 3, 0, Math.PI * 2);
       this.ctx.fill();
     } else {
-      // Soft pastel colors for entities based on frequency
-      const hue = 180 + (entity.frequency * 40); // Blues to purples
+      // Color based on type
+      let hue, saturation = 60;
+      switch(entity.type) {
+        case Config.ENTITY_TYPES.EMITTER:
+          hue = 40; // Orange - constant emitters
+          break;
+        case Config.ENTITY_TYPES.ATTRACTOR:
+          hue = 260; // Purple - attractors
+          break;
+        case Config.ENTITY_TYPES.REPULSOR:
+          hue = 0; // Red - repulsors
+          break;
+        default: // PULSER
+          hue = 180 + (entity.frequency * 40); // Blues - pulsers
+      }
+      
       const gradient = this.ctx.createRadialGradient(x, y, 0, x, y, radius);
-      gradient.addColorStop(0, `hsla(${hue}, 60%, 75%, ${0.5 + intensity * 0.3})`);
-      gradient.addColorStop(0.6, `hsla(${hue}, 50%, 70%, ${intensity * 0.2})`);
-      gradient.addColorStop(1, `hsla(${hue}, 50%, 70%, 0)`);
+      gradient.addColorStop(0, `hsla(${hue}, ${saturation}%, 75%, ${0.5 + intensity * 0.3})`);
+      gradient.addColorStop(0.6, `hsla(${hue}, ${saturation - 10}%, 70%, ${intensity * 0.2})`);
+      gradient.addColorStop(1, `hsla(${hue}, ${saturation - 10}%, 70%, 0)`);
       
       this.ctx.fillStyle = gradient;
       this.ctx.beginPath();
