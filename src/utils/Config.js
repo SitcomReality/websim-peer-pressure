@@ -35,6 +35,8 @@ export const Config = {
   // Physics
   PRESSURE_FORCE_MULTIPLIER: 140, // High multiplier for responsive field-based movement
   EXHAUST_STRENGTH: 1500,        // Strength of the pressure exhaust
+  // Ship-specific exhaust scaling so ship emissions can be tuned separately
+  SHIP_EXHAUST_SCALE: 300,       // Lower default to make ship exhaust gentler (tweakable)
   
   // Nodes
   NODE_COUNT: 5,

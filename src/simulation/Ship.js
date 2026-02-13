@@ -32,11 +32,12 @@ export class Ship extends BaseEntity {
     // power > 0 is forward (exhaust behind), power < 0 is backward (exhaust in front)
     const exhaustAngle = (power > 0) ? this.rotation + Math.PI : this.rotation;
     // Offset slightly so it hits the neighboring grid cells for the gradient
-    const dist = 10; 
+    const dist = 10;
     const exX = this.position.x + Math.cos(exhaustAngle) * dist;
     const exY = this.position.y + Math.sin(exhaustAngle) * dist;
-    
-    // Add significant pressure to create a localized gradient
-    field.addPressure(exX, exY, Config.EXHAUST_STRENGTH * Math.abs(power) * dt);
+
+    // Use a ship-specific scale so exhaust strength is easily tuned
+    const amount = Config.SHIP_EXHAUST_SCALE * Math.abs(power) * dt;
+    field.addPressure(exX, exY, amount);
   }
 }
