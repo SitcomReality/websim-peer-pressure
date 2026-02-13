@@ -2,23 +2,27 @@ export const Config = {
   // Simulation
   GRID_SIZE: 128,
   TIME_STEP: 0.016,
-  WAVE_SPEED: 150,
-  DAMPING: 0.998,
-  PRESSURE_THRESHOLD: 0.01,
+  WAVE_SPEED: 160,
+  DAMPING: 0.992, // Slightly more damping for stability
   
   // Entities
   PLAYER_AMPLITUDE: 0.8,
   ENTITY_PULSE_FREQ: 2.0,
-  EQUILIBRATION_THRESHOLD: 0.05,
-  RESONANCE_THRESHOLD: 1.5,
+  RESONANCE_THRESHOLD: 1.2,
+  ENERGY_DRAIN_BASE: 0.08,
+  HARMONIC_RANGE: 0.4, // Tolerance for "friendly" frequencies
   
   // Visual
-  PRESSURE_SCALE: 2.0,
-  COLOR_HOT: [255, 80, 80],
-  COLOR_COLD: [80, 150, 255],
-  COLOR_NEUTRAL: [20, 20, 20],
+  PRESSURE_SCALE: 2.5,
+  PARTICLE_COUNT: 200,
+  COLOR_HOT: [255, 100, 50],
+  COLOR_COLD: [50, 150, 255],
+  COLOR_NEUTRAL: [10, 12, 18],
   
   // Input
-  TOUCH_RADIUS: 60,
-  MOVE_SPEED: 180
+  MOVE_SPEED: 220,
+  
+  // Nodes
+  NODE_COUNT: 4,
+  NODE_ENERGY_BOOST: 0.1
 };

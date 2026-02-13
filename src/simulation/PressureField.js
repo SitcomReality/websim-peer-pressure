@@ -26,6 +26,22 @@ export class PressureField {
   getPressure(x, y) {
     return this.pressure[this.getIndex(x, y)] || 0;
   }
+
+  getVelocity(x, y) {
+    const idx = this.getIndex(x, y);
+    // Simple 2D velocity estimation from pressure gradient
+    const gx = Math.floor((x / this.width) * this.gridSize);
+    const gy = Math.floor((y / this.height) * this.gridSize);
+    
+    if (gx <= 0 || gx >= this.gridSize - 1 || gy <= 0 || gy >= this.gridSize - 1) {
+      return { x: 0, y: 0 };
+    }
+
+    const vx = (this.pressure[idx + 1] - this.pressure[idx - 1]);
+    const vy = (this.pressure[idx + this.gridSize] - this.pressure[idx - this.gridSize]);
+    
+    return { x: vx, y: vy };
+  }
   
   addPressure(x, y, amount) {
     const idx = this.getIndex(x, y);

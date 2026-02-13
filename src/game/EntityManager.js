@@ -4,13 +4,21 @@ import { Physics } from '../simulation/Physics.js';
 export class EntityManager {
   constructor() {
     this.entities = [];
+    this.nodes = []; // Stationary energy sources
     this.player = null;
     this.spawnTimer = 0;
   }
   
   createPlayer(x, y) {
-    this.player = new WaveEntity(x, y, 2.5, 0.8);
+    this.player = new WaveEntity(x, y, 2.0, 0.9);
     return this.player;
+  }
+
+  spawnNode(x, y, freq) {
+    const node = new WaveEntity(x, y, freq, 0.5);
+    node.isNode = true;
+    node.energy = 2.0; // Nodes are permanent high-energy
+    this.nodes.push(node);
   }
   
   spawnEntity(x, y) {
@@ -20,19 +28,33 @@ export class EntityManager {
   }
   
   update(dt, field) {
-    // Update player with energy drain
+    // Update nodes (environment)
+    for (const node of this.nodes) {
+      node.update(dt, field);
+    }
+
+    // Update player with dynamic interaction
     if (this.player && this.player.alive) {
       this.player.update(dt, field);
-      this.player.energy = Math.max(0, this.player.energy - dt * 0.15);
+      
+      // Calculate local pressure interference
+      const localPressure = field.getPressure(this.player.position.x, this.player.position.y);
+      const playerPhase = Math.sin(this.player.phase);
+      
+      // Resonance mechanic: gain energy if moving with the wave, lose if against it
+      const alignment = localPressure * playerPhase;
+      const energyDelta = (alignment * 0.2 - Config.ENERGY_DRAIN_BASE) * dt;
+      this.player.energy = Math.max(0, Math.min(1.5, this.player.energy + energyDelta));
+
       if (this.player.energy <= 0) {
         this.player.alive = false;
       }
     }
     
-    // Update entities with attraction
+    // Update entities with attraction/repulsion based on frequency
     const allAlive = this.getAllEntities().filter(e => e.alive);
     for (const entity of this.entities) {
-      entity.updateWithAttraction(dt, field, allAlive);
+      this.updateEntityBehaviors(entity, dt, field, allAlive);
     }
     
     // Check for resonance (reproduction)
@@ -53,21 +75,55 @@ export class EntityManager {
     }
   }
   
-  tryAbsorb(playerPos) {
-    if (!this.player || !this.player.alive) return false;
+  updateEntityBehaviors(entity, dt, field, others) {
+    entity.update(dt, field);
+
+    for (const other of others) {
+      if (other === entity) continue;
+      
+      const dx = other.position.x - entity.position.x;
+      const dy = other.position.y - entity.position.y;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+      
+      if (dist > 0 && dist < 180) {
+        // Frequency-based social physics
+        const freqDiff = Math.abs(entity.frequency - other.frequency);
+        const isHarmonic = freqDiff < Config.HARMONIC_RANGE;
+        
+        // Harmonic beings attract, dissonant beings repel
+        const forceDir = isHarmonic ? 1 : -1;
+        const forceMagnitude = (isHarmonic ? 25 : 40) / (dist + 20);
+        
+        entity.position.x += (dx / dist) * forceMagnitude * forceDir * dt;
+        entity.position.y += (dy / dist) * forceMagnitude * forceDir * dt;
+      }
+    }
+  }
+
+  tryAbsorb(player) {
+    if (!player || !player.alive) return false;
     
     let absorbed = false;
     for (let i = this.entities.length - 1; i >= 0; i--) {
       const entity = this.entities[i];
-      const dx = entity.position.x - playerPos.x;
-      const dy = entity.position.y - playerPos.y;
+      const dx = entity.position.x - player.position.x;
+      const dy = entity.position.y - player.position.y;
       const dist = Math.sqrt(dx * dx + dy * dy);
       
-      if (dist < 30) {
-        this.player.energy = Math.min(1.0, this.player.energy + entity.energy * 0.5);
-        this.player.amplitude = Math.min(1.2, this.player.amplitude + 0.05);
-        this.entities.splice(i, 1);
-        absorbed = true;
+      if (dist < 35) {
+        const freqDiff = Math.abs(player.frequency - entity.frequency);
+        if (freqDiff < Config.HARMONIC_RANGE) {
+          // Harmonic absorption (Friendly)
+          player.energy = Math.min(1.5, player.energy + entity.energy * 0.4);
+          player.amplitude = Math.min(1.5, player.amplitude * 1.02);
+          this.entities.splice(i, 1);
+          absorbed = true;
+        } else if (player.energy > entity.energy * 1.5) {
+          // Predatory absorption (Dissonant but stronger)
+          player.energy = Math.min(1.5, player.energy + entity.energy * 0.2);
+          this.entities.splice(i, 1);
+          absorbed = true;
+        }
       }
     }
     return absorbed;

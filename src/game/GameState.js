@@ -14,8 +14,15 @@ export class GameState {
     // Create player in center
     this.entityManager.createPlayer(width / 2, height / 2);
     
+    // Spawn static environmental nodes
+    for (let i = 0; i < Config.NODE_COUNT; i++) {
+      const x = (i + 0.5) * (width / Config.NODE_COUNT);
+      const y = height * (0.2 + Math.random() * 0.6);
+      this.entityManager.spawnNode(x, y, 1.0 + Math.random() * 2.0);
+    }
+
     // Spawn some initial entities
-    for (let i = 0; i < 3; i++) {
+    for (let i = 0; i < 4; i++) {
       const x = Math.random() * width;
       const y = Math.random() * height;
       this.entityManager.spawnEntity(x, y);
@@ -37,7 +44,7 @@ export class GameState {
       this.entityManager.player.position.y = Math.max(20, Math.min(this.height - 20, this.entityManager.player.position.y));
       
       // Auto-absorb nearby entities
-      this.entityManager.tryAbsorb(this.entityManager.player.position);
+      this.entityManager.tryAbsorb(this.entityManager.player);
       
       // Spawn offspring on action press
       if (this.input.consumeAction()) {

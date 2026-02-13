@@ -16,12 +16,13 @@ export class WaveEntity {
     this.age += dt;
     this.phase += this.frequency * Math.PI * 2 * dt;
     
-    // Emit pressure wave
-    const pressure = Math.sin(this.phase) * this.amplitude;
+    // Pulse amplitude slightly with energy
+    const currentAmp = this.amplitude * (0.5 + this.energy * 0.5);
+    const pressure = Math.sin(this.phase) * currentAmp;
     field.addPressure(this.position.x, this.position.y, pressure);
     
-    // Slow energy decay (entities are more stable now)
-    this.energy = Math.max(0, this.energy - dt * 0.05);
+    // Natural decay
+    this.energy = Math.max(0, this.energy - dt * 0.04);
     if (this.energy <= 0) {
       this.alive = false;
     }

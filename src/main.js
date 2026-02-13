@@ -10,6 +10,16 @@ class Game {
     this.uiOverlay = document.getElementById('ui-overlay');
     
     window.addEventListener('resize', () => this.handleResize());
+    
+    // Start audio on first interaction
+    const startAudio = () => {
+      this.initAudio();
+      window.removeEventListener('mousedown', startAudio);
+      window.removeEventListener('touchstart', startAudio);
+    };
+    window.addEventListener('mousedown', startAudio);
+    window.addEventListener('touchstart', startAudio);
+
     this.start();
   }
   
@@ -22,10 +32,16 @@ class Game {
     this.gameState.update(dt);
   }
   
-  render() {
+  render(dt) {
     this.renderer.clear();
     this.renderer.renderPressureField(this.gameState.field);
+    this.renderer.renderParticles(this.gameState.field, dt);
     
+    // Render environmental nodes
+    for (const node of this.gameState.entityManager.nodes) {
+      this.renderer.renderEntity(node, false);
+    }
+
     // Render entities
     for (const entity of this.gameState.entityManager.entities) {
       this.renderer.renderEntity(entity, false);
@@ -53,9 +69,41 @@ class Game {
     this.lastTime = currentTime;
     
     this.update(dt);
-    this.render();
+    this.render(dt);
+    this.updateAudio();
     
     requestAnimationFrame((t) => this.gameLoop(t));
+  }
+
+  initAudio() {
+    if (this.audioCtx) return;
+    this.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    this.osc = this.audioCtx.createOscillator();
+    this.gain = this.audioCtx.createGain();
+    
+    this.osc.type = 'sine';
+    this.osc.frequency.setValueAtTime(220, this.audioCtx.currentTime);
+    this.gain.gain.setValueAtTime(0, this.audioCtx.currentTime);
+    
+    this.osc.connect(this.gain);
+    this.gain.connect(this.audioCtx.destination);
+    this.osc.start();
+  }
+
+  updateAudio() {
+    if (!this.audioCtx || !this.gameState.entityManager.player) return;
+    
+    const player = this.gameState.entityManager.player;
+    const field = this.gameState.field;
+    const pressure = Math.abs(field.getPressure(player.position.x, player.position.y));
+    
+    // Frequency maps to player's internal frequency
+    const targetFreq = 100 + player.frequency * 50;
+    this.osc.frequency.setTargetAtTime(targetFreq, this.audioCtx.currentTime, 0.1);
+    
+    // Volume maps to local pressure intensity
+    const targetGain = player.alive ? Math.min(0.15, pressure * 0.2) : 0;
+    this.gain.gain.setTargetAtTime(targetGain, this.audioCtx.currentTime, 0.1);
   }
   
   start() {
