@@ -33,7 +33,8 @@ export const Config = {
   DASH_COOLDOWN: 1.5,
   
   // Physics
-  PRESSURE_FORCE_MULTIPLIER: 45,  // Increased to make field influence felt
+  PRESSURE_FORCE_MULTIPLIER: 140, // High multiplier for responsive field-based movement
+  EXHAUST_STRENGTH: 1500,        // Strength of the pressure exhaust
   
   // Nodes
   NODE_COUNT: 5,

@@ -83,20 +83,20 @@ export class GameState {
       if (this.isDashing) {
         player.velocity.x = this.dashDirection.x * Config.DASH_SPEED;
         player.velocity.y = this.dashDirection.y * Config.DASH_SPEED;
-        player.emitAbilityPulse(this.field, dt, 1.5); // Emit pressure during dash
+        player.emitExhaust(this.field, dt, 3.0); // Heavy exhaust during dash
       } else {
-        // Thrust (W/S or vertical stick)
-        // Note: movement.y is -1 for W, +1 for S
-        const thrustAmount = -movement.y * Config.THRUST_FORCE * dt;
-        player.velocity.x += Math.cos(player.rotation) * thrustAmount;
-        player.velocity.y += Math.sin(player.rotation) * thrustAmount;
+        // Movement via pressure exhaust
+        // Note: movement.y is -1 for forward (W), +1 for backward (S)
+        if (movement.y !== 0) {
+          player.emitExhaust(this.field, dt, -movement.y);
+        }
 
-        // Apply pressure forces (more impactful now)
+        // The ship is moved ENTIRELY by the pressure field gradient now
         const fieldVel = this.field.getVelocity(player.position.x, player.position.y);
         player.velocity.x -= fieldVel.x * Config.PRESSURE_FORCE_MULTIPLIER;
         player.velocity.y -= fieldVel.y * Config.PRESSURE_FORCE_MULTIPLIER;
 
-        // Apply friction/drag
+        // Apply friction/drag to maintain control
         player.velocity.x *= Config.FRICTION;
         player.velocity.y *= Config.FRICTION;
       }

@@ -27,4 +27,16 @@ export class Ship extends BaseEntity {
     this.energy = Math.max(0, this.energy - dt * 0.01);
     if (this.energy <= 0) this.alive = false;
   }
+
+  emitExhaust(field, dt, power = 1.0) {
+    // power > 0 is forward (exhaust behind), power < 0 is backward (exhaust in front)
+    const exhaustAngle = (power > 0) ? this.rotation + Math.PI : this.rotation;
+    // Offset slightly so it hits the neighboring grid cells for the gradient
+    const dist = 10; 
+    const exX = this.position.x + Math.cos(exhaustAngle) * dist;
+    const exY = this.position.y + Math.sin(exhaustAngle) * dist;
+    
+    // Add significant pressure to create a localized gradient
+    field.addPressure(exX, exY, Config.EXHAUST_STRENGTH * Math.abs(power) * dt);
+  }
 }

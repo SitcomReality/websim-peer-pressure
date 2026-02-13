@@ -17,18 +17,31 @@ export class Pirate extends Ship {
     const pressure = Math.sin(this.phase * 1.5) * this.amplitude;
     field.addPressure(this.position.x, this.position.y, pressure * dt * 25);
 
-    // Simple AI: Seek target (Player)
+    // Simple AI: Seek target (Player) using exhaust-based movement
     if (this.target && this.target.alive) {
       const dx = this.target.position.x - this.position.x;
       const dy = this.target.position.y - this.position.y;
       const dist = Math.sqrt(dx * dx + dy * dy);
       
-      if (dist > 50) {
-        const force = 400 * dt;
-        this.velocity.x += (dx / dist) * force;
-        this.velocity.y += (dy / dist) * force;
-        this.rotation = Math.atan2(dy, dx);
+      const targetRotation = Math.atan2(dy, dx);
+      // Gentle rotation towards target
+      let angleDiff = targetRotation - this.rotation;
+      while (angleDiff < -Math.PI) angleDiff += Math.PI * 2;
+      while (angleDiff > Math.PI) angleDiff -= Math.PI * 2;
+      
+      this.rotation += angleDiff * 2.0 * dt;
+
+      if (dist > 60) {
+        // Emit exhaust to move forward if roughly facing the player
+        if (Math.abs(angleDiff) < 1.0) {
+          this.emitExhaust(field, dt, 0.8);
+        }
       }
+
+      // Physics integration (matching GameState player logic)
+      const fieldVel = field.getVelocity(this.position.x, this.position.y);
+      this.velocity.x -= fieldVel.x * Config.PRESSURE_FORCE_MULTIPLIER;
+      this.velocity.y -= fieldVel.y * Config.PRESSURE_FORCE_MULTIPLIER;
     }
   }
 }

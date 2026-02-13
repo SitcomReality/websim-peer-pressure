@@ -9,11 +9,13 @@ export class Player extends Ship {
   }
 
   update(dt, field) {
-    // Note: No super call to add default pressure emission
-    // We only update position and movement logic from Ship
-    // We skip the WaveEntity-style automatic pressure addition
+    // Note: We skip WaveEntity-style automatic pressure addition
+    // to keep the player "clean" unless they choose to emit.
     super.update(dt, field);
     
+    // Energy cost for active existence
+    this.energy -= dt * 0.02;
+
     // Bounds check
     if (this.position.x < 20) { this.position.x = 20; this.velocity.x *= -0.5; }
     if (this.position.x > field.width - 20) { this.position.x = field.width - 20; this.velocity.x *= -0.5; }
