@@ -5,6 +5,7 @@ export class InputHandler {
   constructor() {
     this.movement = new Vector2D(0, 0);
     this.isMobile = 'ontouchstart' in window;
+    this.actionPressed = false;
     
     if (this.isMobile) {
       this.setupMobileControls();
@@ -35,6 +36,14 @@ export class InputHandler {
       this.movement.x = 0;
       this.movement.y = 0;
     });
+    
+    // Tap anywhere else to spawn
+    document.addEventListener('touchstart', (e) => {
+      if (e.target === document.body || e.target.tagName === 'CANVAS') {
+        this.actionPressed = true;
+        setTimeout(() => this.actionPressed = false, 100);
+      }
+    });
   }
   
   setupDesktopControls() {
@@ -42,10 +51,16 @@ export class InputHandler {
     
     window.addEventListener('keydown', (e) => {
       this.keys[e.key.toLowerCase()] = true;
+      if (e.key === ' ' && !this.actionPressed) {
+        this.actionPressed = true;
+      }
     });
     
     window.addEventListener('keyup', (e) => {
       this.keys[e.key.toLowerCase()] = false;
+      if (e.key === ' ') {
+        this.actionPressed = false;
+      }
     });
   }
   
@@ -61,5 +76,11 @@ export class InputHandler {
     if (this.keys['d']) move.x += 1;
     
     return move.length() > 0 ? move.normalize() : move;
+  }
+  
+  consumeAction() {
+    const pressed = this.actionPressed;
+    this.actionPressed = false;
+    return pressed;
   }
 }

@@ -38,9 +38,13 @@ class Game {
     
     // Update UI
     const stats = this.gameState.getStats();
+    const energyPct = (stats.playerEnergy * 100).toFixed(0);
+    const beingCount = stats.playerAlive ? stats.entities + 1 : stats.entities;
+    
     this.uiOverlay.innerHTML = `
-      BEINGS: ${stats.entities + 1}<br>
-      ENERGY: ${(stats.playerEnergy * 100).toFixed(0)}%
+      BEINGS: ${beingCount}<br>
+      ENERGY: ${energyPct}%<br>
+      ${stats.playerAlive ? 'SPACE/TAP: SPAWN' : 'GAME OVER'}
     `;
   }
   

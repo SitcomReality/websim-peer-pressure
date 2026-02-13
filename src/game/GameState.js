@@ -25,7 +25,7 @@ export class GameState {
   update(dt) {
     // Handle player movement
     const movement = this.input.getMovement();
-    if (this.entityManager.player) {
+    if (this.entityManager.player && this.entityManager.player.alive) {
       const speed = Config.MOVE_SPEED * dt;
       this.entityManager.player.move(
         movement.x * speed,
@@ -35,6 +35,21 @@ export class GameState {
       // Keep player in bounds
       this.entityManager.player.position.x = Math.max(20, Math.min(this.width - 20, this.entityManager.player.position.x));
       this.entityManager.player.position.y = Math.max(20, Math.min(this.height - 20, this.entityManager.player.position.y));
+      
+      // Auto-absorb nearby entities
+      this.entityManager.tryAbsorb(this.entityManager.player.position);
+      
+      // Spawn offspring on action press
+      if (this.input.consumeAction()) {
+        const spawned = this.entityManager.spawnOffspring(
+          this.entityManager.player.position.x,
+          this.entityManager.player.position.y,
+          this.entityManager.player.energy
+        );
+        if (spawned) {
+          this.entityManager.player.energy -= 0.25;
+        }
+      }
     }
     
     // Update entities
