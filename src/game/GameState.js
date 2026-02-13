@@ -83,6 +83,7 @@ export class GameState {
       if (this.isDashing) {
         player.velocity.x = this.dashDirection.x * Config.DASH_SPEED;
         player.velocity.y = this.dashDirection.y * Config.DASH_SPEED;
+        player.emitAbilityPulse(this.field, dt, 1.5); // Emit pressure during dash
       } else {
         // Thrust (W/S or vertical stick)
         // Note: movement.y is -1 for W, +1 for S
@@ -100,19 +101,7 @@ export class GameState {
         player.velocity.y *= Config.FRICTION;
       }
       
-      // Update position
-      player.position.x += player.velocity.x * dt;
-      player.position.y += player.velocity.y * dt;
-      
-      // Keep player in bounds with soft bounce
-      if (player.position.x < 20 || player.position.x > this.width - 20) {
-        player.velocity.x *= -0.5;
-        player.position.x = Math.max(20, Math.min(this.width - 20, player.position.x));
-      }
-      if (player.position.y < 20 || player.position.y > this.height - 20) {
-        player.velocity.y *= -0.5;
-        player.position.y = Math.max(20, Math.min(this.height - 20, player.position.y));
-      }
+
       
       // Auto-absorb nearby entities
       this.entityManager.tryAbsorb(this.entityManager.player);

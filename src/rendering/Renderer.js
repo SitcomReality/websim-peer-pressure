@@ -1,4 +1,8 @@
 import { Config } from '../utils/Config.js';
+import { Player } from '../simulation/Player.js';
+import { Pirate } from '../simulation/Pirate.js';
+import { Compressor } from '../simulation/Compressor.js';
+import { Emitter } from '../simulation/Emitter.js';
 
 export class Renderer {
   constructor(canvas) {
@@ -119,13 +123,16 @@ export class Renderer {
     this.ctx.fill();
   }
 
-  renderEntity(entity, isPlayer = false) {
+  renderEntity(entity, isPlayerFlag = false) {
     const x = entity.position.x;
     const y = entity.position.y;
-    const pulse = entity.type === Config.ENTITY_TYPES.PULSER ? 
-                  (Math.sin(entity.phase) + 1) / 2 : 
-                  0.7; // Constant for non-pulsers
-    const intensity = pulse * Math.min(1.0, entity.energy);
+    const isPlayer = entity instanceof Player;
+    const isPirate = entity instanceof Pirate;
+    const isCompressor = entity instanceof Compressor;
+    
+    const pulse = (entity.phase !== undefined) ? (Math.sin(entity.phase) + 1) / 2 : 0.7;
+    const energy = entity.energy !== undefined ? entity.energy : 1.0;
+    const intensity = pulse * Math.min(1.0, energy);
     
     if (entity.isNode) {
       const nodeRadius = 18 + intensity * 8;
@@ -189,24 +196,24 @@ export class Renderer {
       }
 
       this.ctx.restore();
+    } else if (isPirate) {
+      // Render Pirate Ship
+      this.ctx.save();
+      this.ctx.translate(x, y);
+      this.ctx.rotate(entity.rotation);
+      this.ctx.fillStyle = `rgba(255, 100, 100, ${0.8 + intensity * 0.2})`;
+      this.ctx.beginPath();
+      this.ctx.moveTo(20, 0);
+      this.ctx.lineTo(-10, -10);
+      this.ctx.lineTo(-10, 10);
+      this.ctx.closePath();
+      this.ctx.fill();
+      this.ctx.restore();
     } else {
-      const baseRadius = 12;
+      const baseRadius = isCompressor ? 20 : 12;
       const radius = baseRadius + intensity * 10;
-      // Color based on type
-      let hue, saturation = 60;
-      switch(entity.type) {
-        case Config.ENTITY_TYPES.EMITTER:
-          hue = 40; // Orange - constant emitters
-          break;
-        case Config.ENTITY_TYPES.ATTRACTOR:
-          hue = 260; // Purple - attractors
-          break;
-        case Config.ENTITY_TYPES.REPULSOR:
-          hue = 0; // Red - repulsors
-          break;
-        default: // PULSER
-          hue = 180 + (entity.frequency * 40); // Blues - pulsers
-      }
+      let hue = isCompressor ? 0 : 200;
+      let saturation = isCompressor ? 80 : 60;
       
       const gradient = this.ctx.createRadialGradient(x, y, 0, x, y, radius);
       gradient.addColorStop(0, `hsla(${hue}, ${saturation}%, 75%, ${0.5 + intensity * 0.3})`);

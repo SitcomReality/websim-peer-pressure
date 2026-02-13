@@ -41,9 +41,11 @@ export const Config = {
   
   // Entity Types
   ENTITY_TYPES: {
-    PULSER: 0,      // Normal pulsing entity
-    EMITTER: 1,     // Constant pressure emitter
-    ATTRACTOR: 2,   // Pulls things in
-    REPULSOR: 3     // Pushes things away
+    PULSER: 0,
+    EMITTER: 1,
+    ATTRACTOR: 2,
+    REPULSOR: 3,
+    PIRATE: 4,
+    COMPRESSOR: 5
   }
 };

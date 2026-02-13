@@ -1,76 +1,71 @@
-import { WaveEntity } from '../simulation/WaveEntity.js';
+import { Player } from '../simulation/Player.js';
+import { Pirate } from '../simulation/Pirate.js';
+import { Emitter } from '../simulation/Emitter.js';
+import { Compressor } from '../simulation/Compressor.js';
 import { Physics } from '../simulation/Physics.js';
 import { Config } from '../utils/Config.js';
 
 export class EntityManager {
   constructor() {
     this.entities = [];
-    this.nodes = []; // Stationary energy sources
+    this.nodes = [];
     this.player = null;
     this.spawnTimer = 0;
   }
   
   createPlayer(x, y) {
-    this.player = new WaveEntity(x, y, 0.7, 0.6);  // Gentle player frequency
-    this.player.energy = 1.0;
+    this.player = new Player(x, y);
     return this.player;
   }
 
   spawnNode(x, y, freq) {
-    const node = new WaveEntity(x, y, freq * 0.4, 0.4);  // Slower nodes
+    const node = new Emitter(x, y, freq * 0.3, 0.5);
     node.isNode = true;
-    node.energy = 2.0;
     this.nodes.push(node);
   }
   
   spawnEntity(x, y, type = null) {
-    const frequency = 0.5 + Math.random() * 1.0;  // Slower frequencies
-    const amplitude = 0.3 + Math.random() * 0.3;
-    
-    // Random type if not specified
     if (type === null) {
       const rand = Math.random();
       if (rand < 0.4) type = Config.ENTITY_TYPES.PULSER;
-      else if (rand < 0.6) type = Config.ENTITY_TYPES.EMITTER;
-      else if (rand < 0.8) type = Config.ENTITY_TYPES.ATTRACTOR;
-      else type = Config.ENTITY_TYPES.REPULSOR;
+      else if (rand < 0.6) type = Config.ENTITY_TYPES.PIRATE;
+      else if (rand < 0.8) type = Config.ENTITY_TYPES.COMPRESSOR;
+      else type = Config.ENTITY_TYPES.EMITTER;
     }
     
-    this.entities.push(new WaveEntity(x, y, frequency, amplitude, type));
+    let e;
+    switch(type) {
+      case Config.ENTITY_TYPES.PIRATE: 
+        e = new Pirate(x, y);
+        e.target = this.player;
+        break;
+      case Config.ENTITY_TYPES.COMPRESSOR: 
+        e = new Compressor(x, y); 
+        break;
+      default: 
+        e = new Emitter(x, y, 0.5 + Math.random(), 0.4); 
+    }
+    this.entities.push(e);
   }
   
   update(dt, field) {
-    // Update nodes (environment)
     for (const node of this.nodes) {
       node.update(dt, field);
     }
 
-    // Update player with gentle mechanics
     if (this.player && this.player.alive) {
       this.player.update(dt, field);
       
-      // Calculate local pressure interference
       const localPressure = field.getPressure(this.player.position.x, this.player.position.y);
       const playerPhase = Math.sin(this.player.phase);
-      
-      // Gentle resonance mechanic
       const alignment = localPressure * playerPhase;
       const isProtected = this.player.age < Config.GRACE_PERIOD;
       
-      // Much more forgiving energy system
-      let energyDelta = (alignment * 0.2 - Config.ENERGY_DRAIN_BASE) * dt;
-      
-      // Grace period: can only gain energy
-      if (isProtected) {
-        energyDelta = Math.max(0, energyDelta);
-      }
+      let energyDelta = (alignment * 0.25 - Config.ENERGY_DRAIN_BASE) * dt;
+      if (isProtected) energyDelta = Math.max(0, energyDelta);
 
       this.player.energy = Math.max(0, Math.min(1.2, this.player.energy + energyDelta));
-
-      // Only die if completely drained and not protected
-      if (this.player.energy <= 0 && !isProtected) {
-        this.player.alive = false;
-      }
+      if (this.player.energy <= 0 && !isProtected) this.player.alive = false;
     }
     
     // Update entities with attraction/repulsion based on frequency
@@ -166,9 +161,7 @@ export class EntityManager {
     const newX = x + Math.cos(angle) * dist;
     const newY = y + Math.sin(angle) * dist;
     
-    const frequency = 0.5 + Math.random() * 1.0;  // Slower offspring
-    const amplitude = 0.35 + Math.random() * 0.25;
-    const offspring = new WaveEntity(newX, newY, frequency, amplitude, type);
+    const offspring = new Emitter(newX, newY, 0.5 + Math.random(), 0.4);
     offspring.energy = 0.7;
     this.entities.push(offspring);
     
