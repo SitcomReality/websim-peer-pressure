@@ -25,13 +25,15 @@ export const Config = {
   COLOR_WARNING: [255, 160, 100],  // Gentle amber warning
   
   // Input
-  MOVE_SPEED: 140,     // Slower, more deliberate movement
-  DASH_SPEED: 400,
-  DASH_DURATION: 0.25,
-  DASH_COOLDOWN: 2.0,
+  THRUST_FORCE: 800,   // Force applied when moving forward/backward
+  ROTATION_SPEED: 4.5, // Radians per second
+  FRICTION: 0.96,      // Velocity retention per frame
+  DASH_SPEED: 1200,    // Burst of speed
+  DASH_DURATION: 0.2,
+  DASH_COOLDOWN: 1.5,
   
   // Physics
-  PRESSURE_FORCE_MULTIPLIER: 25,  // How much pressure affects player movement
+  PRESSURE_FORCE_MULTIPLIER: 45,  // Increased to make field influence felt
   
   // Nodes
   NODE_COUNT: 5,

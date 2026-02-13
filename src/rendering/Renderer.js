@@ -128,7 +128,6 @@ export class Renderer {
     const intensity = pulse * Math.min(1.0, entity.energy);
     
     if (entity.isNode) {
-      // Gentle pulsing rings for nodes
       const nodeRadius = 18 + intensity * 8;
       this.ctx.strokeStyle = `rgba(255, 220, 180, ${0.15 + intensity * 0.25})`;
       this.ctx.lineWidth = 2;
@@ -136,7 +135,6 @@ export class Renderer {
       this.ctx.arc(x, y, nodeRadius, 0, Math.PI * 2);
       this.ctx.stroke();
       
-      // Inner glow
       const nodeGlow = this.ctx.createRadialGradient(x, y, 0, x, y, nodeRadius * 0.6);
       nodeGlow.addColorStop(0, `rgba(255, 230, 200, ${0.3 + intensity * 0.2})`);
       nodeGlow.addColorStop(1, 'rgba(255, 230, 200, 0)');
@@ -147,42 +145,53 @@ export class Renderer {
       return;
     }
 
-    const baseRadius = 12;
-    const radius = baseRadius + intensity * 10;
-    
     if (isPlayer) {
-      // Warning glow when energy is low
+      this.ctx.save();
+      this.ctx.translate(x, y);
+      this.ctx.rotate(entity.rotation);
+      
       const isLowEnergy = entity.energy < Config.ENERGY_WARNING;
       const warningPulse = isLowEnergy ? (Math.sin(entity.phase * 3) + 1) / 2 : 0;
       
-      // Outer warning ring
+      // Body shape: sleek elongated triangle/teardrop
+      const length = 24 + intensity * 8;
+      const width = 12 + intensity * 4;
+      
+      // Outer glow
+      const bodyGlow = this.ctx.createRadialGradient(0, 0, 0, 0, 0, length);
+      bodyGlow.addColorStop(0, `rgba(255, 240, 220, ${0.4 + intensity * 0.3})`);
       if (isLowEnergy) {
-        const warningGrad = this.ctx.createRadialGradient(x, y, radius, x, y, radius + 15);
-        warningGrad.addColorStop(0, `rgba(255, 160, 100, ${warningPulse * 0.4})`);
-        warningGrad.addColorStop(1, 'rgba(255, 160, 100, 0)');
-        this.ctx.fillStyle = warningGrad;
-        this.ctx.beginPath();
-        this.ctx.arc(x, y, radius + 15, 0, Math.PI * 2);
-        this.ctx.fill();
+        bodyGlow.addColorStop(0.5, `rgba(255, 100, 50, ${warningPulse * 0.5})`);
       }
-      
-      // Main player glow
-      const gradient = this.ctx.createRadialGradient(x, y, 0, x, y, radius);
-      gradient.addColorStop(0, `rgba(255, 240, 220, ${0.6 + intensity * 0.4})`);
-      gradient.addColorStop(0.5, `rgba(255, 220, 180, ${intensity * 0.3})`);
-      gradient.addColorStop(1, 'rgba(255, 200, 150, 0)');
-      
-      this.ctx.fillStyle = gradient;
+      bodyGlow.addColorStop(1, 'rgba(255, 240, 220, 0)');
+      this.ctx.fillStyle = bodyGlow;
       this.ctx.beginPath();
-      this.ctx.arc(x, y, radius, 0, Math.PI * 2);
+      this.ctx.ellipse(0, 0, length, width, 0, 0, Math.PI * 2);
       this.ctx.fill();
       
-      // Bright core
+      // Sharp ship body
       this.ctx.fillStyle = `rgba(255, 245, 230, ${0.8 + intensity * 0.2})`;
       this.ctx.beginPath();
-      this.ctx.arc(x, y, 3, 0, Math.PI * 2);
+      this.ctx.moveTo(length * 0.8, 0); // Nose
+      this.ctx.lineTo(-length * 0.5, -width * 0.6); // Top back
+      this.ctx.lineTo(-length * 0.3, 0); // Indent
+      this.ctx.lineTo(-length * 0.5, width * 0.6); // Bottom back
+      this.ctx.closePath();
       this.ctx.fill();
+      
+      // Thruster flare if moving
+      if (entity.velocity.length() > 10) {
+        const flareSize = (Math.sin(performance.now() * 0.05) + 1) * 5;
+        this.ctx.fillStyle = `rgba(180, 220, 255, ${0.4 + intensity * 0.4})`;
+        this.ctx.beginPath();
+        this.ctx.arc(-length * 0.5, 0, flareSize, 0, Math.PI * 2);
+        this.ctx.fill();
+      }
+
+      this.ctx.restore();
     } else {
+      const baseRadius = 12;
+      const radius = baseRadius + intensity * 10;
       // Color based on type
       let hue, saturation = 60;
       switch(entity.type) {

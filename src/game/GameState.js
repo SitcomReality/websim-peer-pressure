@@ -66,40 +66,53 @@ export class GameState {
     
     // Handle player movement
     const movement = this.input.getMovement();
-    if (this.entityManager.player && this.entityManager.player.alive) {
+    const player = this.entityManager.player;
+
+    if (player && player.alive) {
+      // Rotation (A/D or horizontal stick)
+      player.rotation += movement.x * Config.ROTATION_SPEED * dt;
+
       // Check for dash input
       if (this.input.consumeDash() && this.dashCooldown <= 0) {
-        if (movement.length() > 0) {
-          this.isDashing = true;
-          this.dashTimer = Config.DASH_DURATION;
-          this.dashCooldown = Config.DASH_COOLDOWN;
-          this.dashDirection = movement.normalize();
-        }
+        this.isDashing = true;
+        this.dashTimer = Config.DASH_DURATION;
+        this.dashCooldown = Config.DASH_COOLDOWN;
+        this.dashDirection = new Vector2D(Math.cos(player.rotation), Math.sin(player.rotation));
       }
       
-      let speed = Config.MOVE_SPEED * dt;
-      let moveX = movement.x * speed;
-      let moveY = movement.y * speed;
-      
-      // Apply dash speed boost
       if (this.isDashing) {
-        moveX = this.dashDirection.x * Config.DASH_SPEED * dt;
-        moveY = this.dashDirection.y * Config.DASH_SPEED * dt;
+        player.velocity.x = this.dashDirection.x * Config.DASH_SPEED;
+        player.velocity.y = this.dashDirection.y * Config.DASH_SPEED;
       } else {
-        // Apply pressure forces (only when not dashing)
-        const vel = this.field.getVelocity(
-          this.entityManager.player.position.x,
-          this.entityManager.player.position.y
-        );
-        moveX -= vel.x * Config.PRESSURE_FORCE_MULTIPLIER * dt;
-        moveY -= vel.y * Config.PRESSURE_FORCE_MULTIPLIER * dt;
+        // Thrust (W/S or vertical stick)
+        // Note: movement.y is -1 for W, +1 for S
+        const thrustAmount = -movement.y * Config.THRUST_FORCE * dt;
+        player.velocity.x += Math.cos(player.rotation) * thrustAmount;
+        player.velocity.y += Math.sin(player.rotation) * thrustAmount;
+
+        // Apply pressure forces (more impactful now)
+        const fieldVel = this.field.getVelocity(player.position.x, player.position.y);
+        player.velocity.x -= fieldVel.x * Config.PRESSURE_FORCE_MULTIPLIER;
+        player.velocity.y -= fieldVel.y * Config.PRESSURE_FORCE_MULTIPLIER;
+
+        // Apply friction/drag
+        player.velocity.x *= Config.FRICTION;
+        player.velocity.y *= Config.FRICTION;
       }
       
-      this.entityManager.player.move(moveX, moveY);
+      // Update position
+      player.position.x += player.velocity.x * dt;
+      player.position.y += player.velocity.y * dt;
       
-      // Keep player in bounds
-      this.entityManager.player.position.x = Math.max(20, Math.min(this.width - 20, this.entityManager.player.position.x));
-      this.entityManager.player.position.y = Math.max(20, Math.min(this.height - 20, this.entityManager.player.position.y));
+      // Keep player in bounds with soft bounce
+      if (player.position.x < 20 || player.position.x > this.width - 20) {
+        player.velocity.x *= -0.5;
+        player.position.x = Math.max(20, Math.min(this.width - 20, player.position.x));
+      }
+      if (player.position.y < 20 || player.position.y > this.height - 20) {
+        player.velocity.y *= -0.5;
+        player.position.y = Math.max(20, Math.min(this.height - 20, player.position.y));
+      }
       
       // Auto-absorb nearby entities
       this.entityManager.tryAbsorb(this.entityManager.player);

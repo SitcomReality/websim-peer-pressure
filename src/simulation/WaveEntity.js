@@ -4,6 +4,8 @@ import { Config } from '../utils/Config.js';
 export class WaveEntity {
   constructor(x, y, frequency = 0.8, amplitude = 0.5, type = 0) {
     this.position = new Vector2D(x, y);
+    this.velocity = new Vector2D(0, 0);
+    this.rotation = -Math.PI / 2; // Face upward initially
     this.frequency = frequency;
     this.amplitude = amplitude;
     this.phase = Math.random() * Math.PI * 2;
