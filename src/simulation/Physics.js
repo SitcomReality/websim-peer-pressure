@@ -22,14 +22,19 @@ export class Physics {
             field.getPressure(e2.position.x, e2.position.y)
           );
           
-          // Resonance condition
-          if (phaseDiff < 0.3 && combinedPressure > Config.RESONANCE_THRESHOLD) {
-            const midX = (e1.position.x + e2.position.x) / 2;
-            const midY = (e1.position.y + e2.position.y) / 2;
-            const newFreq = (e1.frequency + e2.frequency) / 2 + (Math.random() - 0.5) * 0.5;
-            const newAmp = (e1.amplitude + e2.amplitude) / 2;
-            
-            newEntities.push(new WaveEntity(midX, midY, newFreq, newAmp));
+          // Resonance condition: must be in phase, high pressure, and rare
+          if (phaseDiff < 0.25 && combinedPressure > Config.RESONANCE_THRESHOLD) {
+            // Stochastic spawning to prevent exponential growth
+            if (Math.random() < 0.005) {
+              const midX = (e1.position.x + e2.position.x) / 2;
+              const midY = (e1.position.y + e2.position.y) / 2;
+              const newFreq = (e1.frequency + e2.frequency) / 2 + (Math.random() - 0.5) * 0.4;
+              const newAmp = Math.min(0.8, (e1.amplitude + e2.amplitude) / 2);
+              
+              const offspring = new WaveEntity(midX, midY, newFreq, newAmp);
+              offspring.energy = 0.8;
+              newEntities.push(offspring);
+            }
           }
         }
       }

@@ -48,7 +48,11 @@ export class EntityManager {
       
       // Gain energy from resonance, but limit loss during grace period
       let energyDelta = (alignment * 0.15 - Config.ENERGY_DRAIN_BASE) * dt;
-      if (isProtected && energyDelta < 0) energyDelta *= 0.1; 
+      
+      // Strict protection during grace period: can't lose energy
+      if (isProtected) {
+        energyDelta = Math.max(0, energyDelta);
+      }
 
       this.player.energy = Math.max(0, Math.min(1.5, this.player.energy + energyDelta));
 
@@ -63,17 +67,24 @@ export class EntityManager {
       this.updateEntityBehaviors(entity, dt, field, allAlive);
     }
     
-    // Check for resonance (reproduction)
-    const allEntities = this.player ? [this.player, ...this.entities] : this.entities;
-    const newEntities = Physics.checkResonance(allEntities, field);
-    this.entities.push(...newEntities);
+    // Check for resonance (reproduction) with safety limits
+    if (this.entities.length < Config.MAX_ENTITIES) {
+      const allEntitiesForRes = this.player ? [this.player, ...this.entities] : this.entities;
+      const newEntities = Physics.checkResonance(allEntitiesForRes, field);
+      // Use loop instead of spread to avoid call stack limits
+      for (const e of newEntities) {
+        if (this.entities.length < Config.MAX_ENTITIES) {
+          this.entities.push(e);
+        }
+      }
+    }
     
     // Remove dead entities
     this.entities = this.entities.filter(e => e.alive);
     
     // Spawn new entities periodically
     this.spawnTimer += dt;
-    if (this.spawnTimer > 8 && this.entities.length < 12) {
+    if (this.spawnTimer > 10 && this.entities.length < 8) {
       const x = Math.random() * field.width;
       const y = Math.random() * field.height;
       this.spawnEntity(x, y);

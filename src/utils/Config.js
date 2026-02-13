@@ -3,15 +3,16 @@ export const Config = {
   GRID_SIZE: 128,
   TIME_STEP: 0.008, // Smaller fixed time step for stability
   WAVE_SPEED: 45,   // Reduced for stability at 60fps
-  DAMPING: 0.98,    // Increased damping to prevent blowouts
+  DAMPING: 0.97,    // Increased damping to prevent blowouts
   
   // Entities
   PLAYER_AMPLITUDE: 0.6,
   ENTITY_PULSE_FREQ: 2.0,
-  RESONANCE_THRESHOLD: 1.0,
-  ENERGY_DRAIN_BASE: 0.03,
+  RESONANCE_THRESHOLD: 2.5, // Increased significantly to prevent explosion
+  MAX_ENTITIES: 30,          // Population cap
+  ENERGY_DRAIN_BASE: 0.01,   // Reduced for better survival
   HARMONIC_RANGE: 0.5, 
-  GRACE_PERIOD: 3.0, // Seconds of invulnerability at start
+  GRACE_PERIOD: 5.0,         // Extended survival buffer
   
   // Visual
   PRESSURE_SCALE: 4.0,
@@ -21,7 +22,7 @@ export const Config = {
   COLOR_NEUTRAL: [8, 10, 15],
   
   // Input
-  MOVE_SPEED: 200,
+  MOVE_SPEED: 220,
   
   // Nodes
   NODE_COUNT: 4,
