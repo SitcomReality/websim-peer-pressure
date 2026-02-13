@@ -49,31 +49,36 @@ export class PressureField {
   }
   
   update(dt) {
-    // Wave equation: ∂²p/∂t² = c²∇²p
+    // Sub-step the simulation for stability
+    const subSteps = 2;
+    const sdt = dt / subSteps;
     const c2 = Config.WAVE_SPEED * Config.WAVE_SPEED;
     const damping = Config.DAMPING;
-    
-    for (let y = 1; y < this.gridSize - 1; y++) {
-      for (let x = 1; x < this.gridSize - 1; x++) {
-        const idx = y * this.gridSize + x;
-        
-        // Laplacian (discrete approximation)
-        const laplacian = 
-          this.pressure[idx - 1] +
-          this.pressure[idx + 1] +
-          this.pressure[idx - this.gridSize] +
-          this.pressure[idx + this.gridSize] -
-          4 * this.pressure[idx];
-        
-        // Update velocity
-        this.velocity[idx] += c2 * laplacian * dt;
-        this.velocity[idx] *= damping;
+
+    for (let s = 0; s < subSteps; s++) {
+      for (let y = 1; y < this.gridSize - 1; y++) {
+        for (let x = 1; x < this.gridSize - 1; x++) {
+          const idx = y * this.gridSize + x;
+          
+          // Laplacian
+          const laplacian = 
+            this.pressure[idx - 1] +
+            this.pressure[idx + 1] +
+            this.pressure[idx - this.gridSize] +
+            this.pressure[idx + this.gridSize] -
+            4 * this.pressure[idx];
+          
+          this.velocity[idx] += c2 * laplacian * sdt;
+          this.velocity[idx] *= damping;
+        }
       }
-    }
-    
-    // Update pressure from velocity
-    for (let i = 0; i < this.pressure.length; i++) {
-      this.pressure[i] += this.velocity[i] * dt;
+      
+      for (let i = 0; i < this.pressure.length; i++) {
+        this.pressure[i] += this.velocity[i] * sdt;
+        // Clamp to prevent infinite growth from feedback
+        if (this.pressure[i] > 5) this.pressure[i] = 5;
+        if (this.pressure[i] < -5) this.pressure[i] = -5;
+      }
     }
   }
   

@@ -44,10 +44,15 @@ export class EntityManager {
       
       // Resonance mechanic: gain energy if moving with the wave, lose if against it
       const alignment = localPressure * playerPhase;
-      const energyDelta = (alignment * 0.2 - Config.ENERGY_DRAIN_BASE) * dt;
+      const isProtected = this.player.age < Config.GRACE_PERIOD;
+      
+      // Gain energy from resonance, but limit loss during grace period
+      let energyDelta = (alignment * 0.15 - Config.ENERGY_DRAIN_BASE) * dt;
+      if (isProtected && energyDelta < 0) energyDelta *= 0.1; 
+
       this.player.energy = Math.max(0, Math.min(1.5, this.player.energy + energyDelta));
 
-      if (this.player.energy <= 0) {
+      if (this.player.energy <= 0 && !isProtected) {
         this.player.alive = false;
       }
     }

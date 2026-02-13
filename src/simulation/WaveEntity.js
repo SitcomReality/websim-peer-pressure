@@ -16,13 +16,16 @@ export class WaveEntity {
     this.age += dt;
     this.phase += this.frequency * Math.PI * 2 * dt;
     
-    // Pulse amplitude slightly with energy
-    const currentAmp = this.amplitude * (0.5 + this.energy * 0.5);
-    const pressure = Math.sin(this.phase) * currentAmp;
-    field.addPressure(this.position.x, this.position.y, pressure);
+    // Fade in amplitude to prevent explosive starts
+    const fadeIn = Math.min(1.0, this.age * 0.5);
+    const currentAmp = this.amplitude * (0.5 + this.energy * 0.5) * fadeIn;
     
-    // Natural decay
-    this.energy = Math.max(0, this.energy - dt * 0.04);
+    const pressure = Math.sin(this.phase) * currentAmp;
+    // Scale added pressure by dt to normalize source strength across frame rates
+    field.addPressure(this.position.x, this.position.y, pressure * dt * 30);
+    
+    // Natural decay (passive)
+    this.energy = Math.max(0, this.energy - dt * 0.03);
     if (this.energy <= 0) {
       this.alive = false;
     }
