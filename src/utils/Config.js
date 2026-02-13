@@ -1,0 +1,24 @@
+export const Config = {
+  // Simulation
+  GRID_SIZE: 128,
+  TIME_STEP: 0.016,
+  WAVE_SPEED: 150,
+  DAMPING: 0.998,
+  PRESSURE_THRESHOLD: 0.01,
+  
+  // Entities
+  PLAYER_AMPLITUDE: 0.8,
+  ENTITY_PULSE_FREQ: 2.0,
+  EQUILIBRATION_THRESHOLD: 0.05,
+  RESONANCE_THRESHOLD: 1.5,
+  
+  // Visual
+  PRESSURE_SCALE: 2.0,
+  COLOR_HOT: [255, 80, 80],
+  COLOR_COLD: [80, 150, 255],
+  COLOR_NEUTRAL: [20, 20, 20],
+  
+  // Input
+  TOUCH_RADIUS: 60,
+  MOVE_SPEED: 180
+};
