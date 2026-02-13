@@ -1,5 +1,6 @@
 import { WaveEntity } from '../simulation/WaveEntity.js';
 import { Physics } from '../simulation/Physics.js';
+import { Config } from '../utils/Config.js';
 
 export class EntityManager {
   constructor() {
