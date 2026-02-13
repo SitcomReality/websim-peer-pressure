@@ -11,20 +11,21 @@ export class EntityManager {
   }
   
   createPlayer(x, y) {
-    this.player = new WaveEntity(x, y, 2.0, 0.9);
+    this.player = new WaveEntity(x, y, 0.7, 0.6);  // Gentle player frequency
+    this.player.energy = 1.0;
     return this.player;
   }
 
   spawnNode(x, y, freq) {
-    const node = new WaveEntity(x, y, freq, 0.5);
+    const node = new WaveEntity(x, y, freq * 0.4, 0.4);  // Slower nodes
     node.isNode = true;
-    node.energy = 2.0; // Nodes are permanent high-energy
+    node.energy = 2.0;
     this.nodes.push(node);
   }
   
   spawnEntity(x, y) {
-    const frequency = 1.5 + Math.random() * 2;
-    const amplitude = 0.3 + Math.random() * 0.4;
+    const frequency = 0.5 + Math.random() * 1.0;  // Slower frequencies
+    const amplitude = 0.3 + Math.random() * 0.3;
     this.entities.push(new WaveEntity(x, y, frequency, amplitude));
   }
   
@@ -34,7 +35,7 @@ export class EntityManager {
       node.update(dt, field);
     }
 
-    // Update player with dynamic interaction
+    // Update player with gentle mechanics
     if (this.player && this.player.alive) {
       this.player.update(dt, field);
       
@@ -42,20 +43,21 @@ export class EntityManager {
       const localPressure = field.getPressure(this.player.position.x, this.player.position.y);
       const playerPhase = Math.sin(this.player.phase);
       
-      // Resonance mechanic: gain energy if moving with the wave, lose if against it
+      // Gentle resonance mechanic
       const alignment = localPressure * playerPhase;
       const isProtected = this.player.age < Config.GRACE_PERIOD;
       
-      // Gain energy from resonance, but limit loss during grace period
-      let energyDelta = (alignment * 0.15 - Config.ENERGY_DRAIN_BASE) * dt;
+      // Much more forgiving energy system
+      let energyDelta = (alignment * 0.2 - Config.ENERGY_DRAIN_BASE) * dt;
       
-      // Strict protection during grace period: can't lose energy
+      // Grace period: can only gain energy
       if (isProtected) {
         energyDelta = Math.max(0, energyDelta);
       }
 
-      this.player.energy = Math.max(0, Math.min(1.5, this.player.energy + energyDelta));
+      this.player.energy = Math.max(0, Math.min(1.2, this.player.energy + energyDelta));
 
+      // Only die if completely drained and not protected
       if (this.player.energy <= 0 && !isProtected) {
         this.player.alive = false;
       }
@@ -82,9 +84,9 @@ export class EntityManager {
     // Remove dead entities
     this.entities = this.entities.filter(e => e.alive);
     
-    // Spawn new entities periodically
+    // Gentle periodic spawning
     this.spawnTimer += dt;
-    if (this.spawnTimer > 10 && this.entities.length < 8) {
+    if (this.spawnTimer > 15 && this.entities.length < 6) {
       const x = Math.random() * field.width;
       const y = Math.random() * field.height;
       this.spawnEntity(x, y);
@@ -102,14 +104,14 @@ export class EntityManager {
       const dy = other.position.y - entity.position.y;
       const dist = Math.sqrt(dx * dx + dy * dy);
       
-      if (dist > 0 && dist < 180) {
-        // Frequency-based social physics
+      if (dist > 0 && dist < 200) {
+        // Gentle frequency-based interaction
         const freqDiff = Math.abs(entity.frequency - other.frequency);
         const isHarmonic = freqDiff < Config.HARMONIC_RANGE;
         
-        // Harmonic beings attract, dissonant beings repel
+        // Softer forces
         const forceDir = isHarmonic ? 1 : -1;
-        const forceMagnitude = (isHarmonic ? 25 : 40) / (dist + 20);
+        const forceMagnitude = (isHarmonic ? 12 : 18) / (dist + 30);
         
         entity.position.x += (dx / dist) * forceMagnitude * forceDir * dt;
         entity.position.y += (dy / dist) * forceMagnitude * forceDir * dt;
@@ -127,17 +129,17 @@ export class EntityManager {
       const dy = entity.position.y - player.position.y;
       const dist = Math.sqrt(dx * dx + dy * dy);
       
-      if (dist < 35) {
+      if (dist < 40) {  // Easier absorption range
         const freqDiff = Math.abs(player.frequency - entity.frequency);
         if (freqDiff < Config.HARMONIC_RANGE) {
-          // Harmonic absorption (Friendly)
-          player.energy = Math.min(1.5, player.energy + entity.energy * 0.4);
-          player.amplitude = Math.min(1.5, player.amplitude * 1.02);
+          // Generous harmonic absorption
+          player.energy = Math.min(1.2, player.energy + entity.energy * 0.6);
+          player.amplitude = Math.min(1.2, player.amplitude * 1.05);
           this.entities.splice(i, 1);
           absorbed = true;
-        } else if (player.energy > entity.energy * 1.5) {
-          // Predatory absorption (Dissonant but stronger)
-          player.energy = Math.min(1.5, player.energy + entity.energy * 0.2);
+        } else if (player.energy > entity.energy * 1.2) {
+          // Still possible to absorb dissonant entities
+          player.energy = Math.min(1.2, player.energy + entity.energy * 0.3);
           this.entities.splice(i, 1);
           absorbed = true;
         }
@@ -147,17 +149,17 @@ export class EntityManager {
   }
   
   spawnOffspring(x, y, parentEnergy) {
-    if (parentEnergy < 0.3) return null;
+    if (parentEnergy < 0.25) return null;
     
     const angle = Math.random() * Math.PI * 2;
-    const dist = 40;
+    const dist = 45;
     const newX = x + Math.cos(angle) * dist;
     const newY = y + Math.sin(angle) * dist;
     
-    const frequency = 1.5 + Math.random() * 2;
-    const amplitude = 0.4 + Math.random() * 0.3;
+    const frequency = 0.5 + Math.random() * 1.0;  // Slower offspring
+    const amplitude = 0.35 + Math.random() * 0.25;
     const offspring = new WaveEntity(newX, newY, frequency, amplitude);
-    offspring.energy = 0.6;
+    offspring.energy = 0.7;
     this.entities.push(offspring);
     
     return offspring;

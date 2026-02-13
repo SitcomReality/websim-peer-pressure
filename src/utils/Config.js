@@ -1,30 +1,33 @@
 export const Config = {
   // Simulation
   GRID_SIZE: 128,
-  TIME_STEP: 0.008, // Smaller fixed time step for stability
-  WAVE_SPEED: 45,   // Reduced for stability at 60fps
-  DAMPING: 0.97,    // Increased damping to prevent blowouts
+  TIME_STEP: 0.008,
+  WAVE_SPEED: 20,      // Much slower, gentler waves
+  DAMPING: 0.985,      // More damping for smoother field
   
   // Entities
-  PLAYER_AMPLITUDE: 0.6,
-  ENTITY_PULSE_FREQ: 2.0,
-  RESONANCE_THRESHOLD: 2.5, // Increased significantly to prevent explosion
-  MAX_ENTITIES: 30,          // Population cap
-  ENERGY_DRAIN_BASE: 0.01,   // Reduced for better survival
-  HARMONIC_RANGE: 0.5, 
-  GRACE_PERIOD: 5.0,         // Extended survival buffer
+  PLAYER_AMPLITUDE: 0.4,
+  ENTITY_PULSE_FREQ: 0.6,      // Slower gentle pulses
+  RESONANCE_THRESHOLD: 4.0,    // Rare, special events
+  MAX_ENTITIES: 25,
+  ENERGY_DRAIN_BASE: 0.005,    // Minimal drain
+  HARMONIC_RANGE: 0.8,         // Easier to harmonize
+  GRACE_PERIOD: 10.0,          // Long grace period
+  ENERGY_WARNING: 0.3,         // Warning threshold
   
   // Visual
-  PRESSURE_SCALE: 4.0,
-  PARTICLE_COUNT: 150,
-  COLOR_HOT: [255, 120, 60],
-  COLOR_COLD: [60, 160, 255],
-  COLOR_NEUTRAL: [8, 10, 15],
+  PRESSURE_SCALE: 2.5,
+  PARTICLE_COUNT: 120,
+  COLOR_HOT: [255, 200, 150],      // Warm peach
+  COLOR_COLD: [180, 220, 255],     // Soft sky blue
+  COLOR_NEUTRAL: [15, 18, 25],     // Deep navy
+  COLOR_PLAYER: [255, 240, 220],   // Warm white
+  COLOR_WARNING: [255, 160, 100],  // Gentle amber warning
   
   // Input
-  MOVE_SPEED: 220,
+  MOVE_SPEED: 140,     // Slower, more deliberate movement
   
   // Nodes
-  NODE_COUNT: 4,
-  NODE_ENERGY_BOOST: 0.1
+  NODE_COUNT: 5,
+  NODE_ENERGY_BOOST: 0.15
 };

@@ -2,30 +2,29 @@ import { Vector2D } from '../utils/Vector2D.js';
 import { Config } from '../utils/Config.js';
 
 export class WaveEntity {
-  constructor(x, y, frequency = 2.0, amplitude = 0.5) {
+  constructor(x, y, frequency = 0.8, amplitude = 0.5) {
     this.position = new Vector2D(x, y);
     this.frequency = frequency;
     this.amplitude = amplitude;
     this.phase = Math.random() * Math.PI * 2;
     this.age = 0;
     this.alive = true;
-    this.energy = 1.2; // Start with a bit more buffer
+    this.energy = 1.0;
   }
   
   update(dt, field) {
     this.age += dt;
     this.phase += this.frequency * Math.PI * 2 * dt;
     
-    // Fade in amplitude to prevent explosive starts
-    const fadeIn = Math.min(1.0, this.age * 0.5);
-    const currentAmp = this.amplitude * (0.5 + this.energy * 0.5) * fadeIn;
+    // Gentle fade in
+    const fadeIn = Math.min(1.0, this.age * 0.8);
+    const currentAmp = this.amplitude * (0.6 + this.energy * 0.4) * fadeIn;
     
     const pressure = Math.sin(this.phase) * currentAmp;
-    // Scale added pressure by dt to normalize source strength across frame rates
-    field.addPressure(this.position.x, this.position.y, pressure * dt * 30);
+    field.addPressure(this.position.x, this.position.y, pressure * dt * 20);
     
-    // Natural decay (passive)
-    this.energy = Math.max(0, this.energy - dt * 0.03);
+    // Very slow natural decay
+    this.energy = Math.max(0, this.energy - dt * 0.015);
     if (this.energy <= 0) {
       this.alive = false;
     }

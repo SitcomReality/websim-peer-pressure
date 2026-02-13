@@ -78,11 +78,11 @@ export class Renderer {
   }
 
   renderParticles(field, dt) {
-    this.ctx.fillStyle = 'rgba(255, 255, 255, 0.4)';
+    this.ctx.fillStyle = 'rgba(255, 240, 220, 0.25)';
     for (const p of this.particles) {
       const vel = field.getVelocity(p.x, p.y);
-      p.vx = p.vx * 0.9 + vel.x * 200 * dt;
-      p.vy = p.vy * 0.9 + vel.y * 200 * dt;
+      p.vx = p.vx * 0.95 + vel.x * 80 * dt;  // Much slower drift
+      p.vy = p.vy * 0.95 + vel.y * 80 * dt;
       
       p.x += p.vx;
       p.y += p.vy;
@@ -100,40 +100,82 @@ export class Renderer {
   renderEntity(entity, isPlayer = false) {
     const x = entity.position.x;
     const y = entity.position.y;
-    const intensity = Math.abs(Math.sin(entity.phase)) * Math.min(1.0, entity.energy);
+    const pulse = (Math.sin(entity.phase) + 1) / 2; // 0 to 1
+    const intensity = pulse * Math.min(1.0, entity.energy);
     
     if (entity.isNode) {
-      this.ctx.strokeStyle = `rgba(255, 255, 255, ${0.2 + intensity * 0.3})`;
+      // Gentle pulsing rings for nodes
+      const nodeRadius = 18 + intensity * 8;
+      this.ctx.strokeStyle = `rgba(255, 220, 180, ${0.15 + intensity * 0.25})`;
       this.ctx.lineWidth = 2;
       this.ctx.beginPath();
-      this.ctx.arc(x, y, 15 + intensity * 5, 0, Math.PI * 2);
+      this.ctx.arc(x, y, nodeRadius, 0, Math.PI * 2);
       this.ctx.stroke();
+      
+      // Inner glow
+      const nodeGlow = this.ctx.createRadialGradient(x, y, 0, x, y, nodeRadius * 0.6);
+      nodeGlow.addColorStop(0, `rgba(255, 230, 200, ${0.3 + intensity * 0.2})`);
+      nodeGlow.addColorStop(1, 'rgba(255, 230, 200, 0)');
+      this.ctx.fillStyle = nodeGlow;
+      this.ctx.beginPath();
+      this.ctx.arc(x, y, nodeRadius * 0.6, 0, Math.PI * 2);
+      this.ctx.fill();
       return;
     }
 
-    const radius = 10 + intensity * 15;
-    const gradient = this.ctx.createRadialGradient(x, y, 0, x, y, radius);
+    const baseRadius = 12;
+    const radius = baseRadius + intensity * 10;
     
     if (isPlayer) {
-      gradient.addColorStop(0, `rgba(255, 255, 255, ${0.5 + intensity * 0.5})`);
-      gradient.addColorStop(0.4, `rgba(200, 220, 255, ${intensity * 0.4})`);
-      gradient.addColorStop(1, 'rgba(200, 220, 255, 0)');
+      // Warning glow when energy is low
+      const isLowEnergy = entity.energy < Config.ENERGY_WARNING;
+      const warningPulse = isLowEnergy ? (Math.sin(entity.phase * 3) + 1) / 2 : 0;
+      
+      // Outer warning ring
+      if (isLowEnergy) {
+        const warningGrad = this.ctx.createRadialGradient(x, y, radius, x, y, radius + 15);
+        warningGrad.addColorStop(0, `rgba(255, 160, 100, ${warningPulse * 0.4})`);
+        warningGrad.addColorStop(1, 'rgba(255, 160, 100, 0)');
+        this.ctx.fillStyle = warningGrad;
+        this.ctx.beginPath();
+        this.ctx.arc(x, y, radius + 15, 0, Math.PI * 2);
+        this.ctx.fill();
+      }
+      
+      // Main player glow
+      const gradient = this.ctx.createRadialGradient(x, y, 0, x, y, radius);
+      gradient.addColorStop(0, `rgba(255, 240, 220, ${0.6 + intensity * 0.4})`);
+      gradient.addColorStop(0.5, `rgba(255, 220, 180, ${intensity * 0.3})`);
+      gradient.addColorStop(1, 'rgba(255, 200, 150, 0)');
+      
+      this.ctx.fillStyle = gradient;
+      this.ctx.beginPath();
+      this.ctx.arc(x, y, radius, 0, Math.PI * 2);
+      this.ctx.fill();
+      
+      // Bright core
+      this.ctx.fillStyle = `rgba(255, 245, 230, ${0.8 + intensity * 0.2})`;
+      this.ctx.beginPath();
+      this.ctx.arc(x, y, 3, 0, Math.PI * 2);
+      this.ctx.fill();
     } else {
-      // Color entities based on frequency
-      const hue = (entity.frequency * 60) % 360;
-      gradient.addColorStop(0, `hsla(${hue}, 80%, 70%, ${0.4 + intensity * 0.4})`);
-      gradient.addColorStop(1, `hsla(${hue}, 80%, 70%, 0)`);
+      // Soft pastel colors for entities based on frequency
+      const hue = 180 + (entity.frequency * 40); // Blues to purples
+      const gradient = this.ctx.createRadialGradient(x, y, 0, x, y, radius);
+      gradient.addColorStop(0, `hsla(${hue}, 60%, 75%, ${0.5 + intensity * 0.3})`);
+      gradient.addColorStop(0.6, `hsla(${hue}, 50%, 70%, ${intensity * 0.2})`);
+      gradient.addColorStop(1, `hsla(${hue}, 50%, 70%, 0)`);
+      
+      this.ctx.fillStyle = gradient;
+      this.ctx.beginPath();
+      this.ctx.arc(x, y, radius, 0, Math.PI * 2);
+      this.ctx.fill();
+      
+      // Gentle core
+      this.ctx.fillStyle = `hsla(${hue}, 70%, 85%, ${0.6 + intensity * 0.2})`;
+      this.ctx.beginPath();
+      this.ctx.arc(x, y, 2.5, 0, Math.PI * 2);
+      this.ctx.fill();
     }
-    
-    this.ctx.fillStyle = gradient;
-    this.ctx.beginPath();
-    this.ctx.arc(x, y, radius, 0, Math.PI * 2);
-    this.ctx.fill();
-
-    // Draw a small core
-    this.ctx.fillStyle = isPlayer ? '#fff' : `hsla(${(entity.frequency * 60) % 360}, 100%, 80%, 0.8)`;
-    this.ctx.beginPath();
-    this.ctx.arc(x, y, 2, 0, Math.PI * 2);
-    this.ctx.fill();
   }
 }

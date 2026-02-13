@@ -21,8 +21,8 @@ export class GameState {
       this.entityManager.spawnNode(x, y, 1.0 + Math.random() * 2.0);
     }
 
-    // Spawn some initial entities
-    for (let i = 0; i < 4; i++) {
+    // Spawn fewer initial entities for calm start
+    for (let i = 0; i < 2; i++) {
       const x = Math.random() * width;
       const y = Math.random() * height;
       this.entityManager.spawnEntity(x, y);
